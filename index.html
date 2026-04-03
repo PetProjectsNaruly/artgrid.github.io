@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArtGrid — Artist Grid Scaling Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>ArtGrid</h1>
+    <p class="subtitle">Grid scaling &amp; measurement tool for artists</p>
+  </header>
+
+  <main>
+
+    <!-- Setup Summary (collapses steps 1-4 after Draw Grid) -->
+    <div id="setup-summary" class="card hidden">
+      <div id="setup-summary-text"></div>
+      <button id="btn-edit-setup" class="secondary">&#9998; Edit Setup</button>
+    </div>
+
+    <!-- Step 1: Unit Preference -->
+    <section class="card" id="section-units">
+      <h2>Step 1 — Unit Preference</h2>
+      <div class="field-row">
+        <label for="unit-select">Output unit <span class="hint">(scale factor &amp; all measurements)</span>:</label>
+        <select id="unit-select">
+          <option value="cm">Centimeters (cm)</option>
+          <option value="in">Inches (in)</option>
+          <option value="ft">Feet (ft)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Step 2: Canvas Dimensions -->
+    <section class="card" id="section-canvas">
+      <h2>Step 2 — Canvas Size</h2>
+      <div class="field-row">
+        <label for="canvas-unit-select">Canvas unit:</label>
+        <select id="canvas-unit-select">
+          <option value="ft">Feet (ft)</option>
+          <option value="in">Inches (in)</option>
+          <option value="cm">Centimeters (cm)</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label for="canvas-width">Width:</label>
+        <input type="number" id="canvas-width" min="0.1" step="0.1" placeholder="e.g. 2" />
+        <span class="canvas-unit-label"></span>
+      </div>
+      <div class="field-row">
+        <label for="canvas-height">Height:</label>
+        <input type="number" id="canvas-height" min="0.1" step="0.1" placeholder="e.g. 3" />
+        <span class="canvas-unit-label"></span>
+      </div>
+    </section>
+
+    <!-- Step 3: Image Upload -->
+    <section class="card" id="section-image">
+      <h2>Step 3 — Reference Image</h2>
+      <div class="field-row">
+        <label for="image-upload">Upload image:</label>
+        <input type="file" id="image-upload" accept="image/png, image/jpeg, image/webp" />
+      </div>
+      <div id="img-placement-row" class="field-row hidden">
+        <label for="placement-select">Image placement on canvas:</label>
+        <select id="placement-select">
+          <option value="center">Center (recommended)</option>
+          <option value="top-left">Top-left</option>
+        </select>
+      </div>
+      <div id="fit-info" class="info-box hidden"></div>
+    </section>
+
+    <!-- Step 4: Grid Configuration -->
+    <section class="card hidden" id="section-grid">
+      <h2>Step 4 — Grid Configuration</h2>
+      <div class="field-row">
+        <label>Grid mode:</label>
+        <label class="radio-label">
+          <input type="radio" name="grid-mode" value="division" checked /> Division
+          <span class="hint">(divide image into N × M cells)</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="grid-mode" value="spacing" /> Fixed spacing
+          <span class="hint">(every X <span class="unit-label"></span> on canvas)</span>
+        </label>
+      </div>
+
+      <div id="grid-division-inputs">
+        <div class="field-row">
+          <label for="grid-cols">Columns:</label>
+          <input type="number" id="grid-cols" min="1" max="50" value="4" />
+        </div>
+        <div class="field-row">
+          <label for="grid-rows">Rows:</label>
+          <input type="number" id="grid-rows" min="1" max="50" value="4" />
+        </div>
+      </div>
+
+      <div id="grid-spacing-inputs" class="hidden">
+        <div class="field-row">
+          <label for="grid-spacing-col">Column spacing:</label>
+          <input type="number" id="grid-spacing-col" min="0.1" step="0.1" placeholder="e.g. 5" />
+          <span class="unit-label"></span>
+        </div>
+        <div class="field-row">
+          <label for="grid-spacing-row">Row spacing:</label>
+          <input type="number" id="grid-spacing-row" min="0.1" step="0.1" placeholder="e.g. 5" />
+          <span class="unit-label"></span>
+        </div>
+      </div>
+
+      <button id="btn-draw-grid">Draw Grid</button>
+    </section>
+
+    <!-- Step 5: Canvas + Measurement Panel -->
+    <section class="card hidden" id="section-workspace">
+      <h2>Step 5 — Workspace</h2>
+
+      <div id="cell-size-info" class="info-box hidden"></div>
+
+      <div id="workspace-layout">
+
+        <div id="image-panel">
+          <h3>Canvas &amp; Image Preview <span class="hint">(click within the image area to measure a point)</span></h3>
+          <div id="canvas-wrapper">
+            <canvas id="image-canvas"></canvas>
+          </div>
+        </div>
+
+        <div id="measurement-panel">
+          <h3>Measurements</h3>
+          <div id="last-point-info" class="info-box">
+            Tap or click on the image to get canvas measurements for that point.
+          </div>
+
+          <div id="pin-controls" class="hidden">
+            <input type="text" id="pin-label-input" placeholder="Label (e.g. left eye)" />
+            <button id="btn-add-pin">Add Pin</button>
+          </div>
+
+          <ul id="pin-list"></ul>
+          <button id="btn-clear-pins" class="secondary hidden">Clear All Pins</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Canvas Grid Reference (Companion View) -->
+    <section class="card hidden" id="section-canvas-grid">
+      <h2>Canvas Grid Reference</h2>
+      <p class="hint">Use this as a guide to draw the grid on your physical canvas. <button id="btn-print" class="link-btn">Print</button></p>
+      <div id="canvas-grid-wrapper">
+        <canvas id="canvas-grid-canvas"></canvas>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>ArtGrid &mdash; local tool for artists</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

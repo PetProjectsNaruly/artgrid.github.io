@@ -1,0 +1,528 @@
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f4f4f0;
+  color: #222;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+header {
+  background: #2c2c2c;
+  color: #fff;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+header h1 {
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+/* ── Main Layout ──────────────────────────────────────── */
+main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Cards ────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+/* ── Form Fields ──────────────────────────────────────── */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.field-row label {
+  min-width: 130px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  width: 130px;
+  background: #fafafa;
+}
+
+input[type="file"] {
+  font-size: 0.9rem;
+}
+
+select {
+  width: auto;
+  cursor: pointer;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: unset;
+}
+
+.unit-label {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.measure-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0.2rem 0;
+}
+
+.measure-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  flex: 0 0 14px;
+  margin-top: 2px;
+}
+
+.swatch-blue {
+  background: rgb(0, 145, 255);
+}
+
+.swatch-orange {
+  background: rgb(255, 150, 0);
+}
+
+/* ── Buttons ──────────────────────────────────────────── */
+button {
+  padding: 0.45rem 1.1rem;
+  background: #2c2c2c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #444;
+}
+
+button.secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+button.secondary:hover {
+  background: #ccc;
+}
+
+button.link-btn {
+  background: none;
+  color: #2979ff;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+button.link-btn:hover {
+  background: none;
+  color: #1a56c4;
+}
+
+/* ── Info Box ─────────────────────────────────────────── */
+.info-box {
+  background: #f0f4ff;
+  border: 1px solid #b3c8ff;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  color: #1a3a7a;
+  line-height: 1.6;
+}
+
+.info-box.warning {
+  background: #fff8e1;
+  border-color: #ffe082;
+  color: #7a5c00;
+}
+
+#cell-size-info {
+  background: #f0fff4;
+  border-color: #6fcf97;
+  color: #1a5c35;
+  margin-bottom: 1rem;
+}
+
+/* ── Setup Summary Bar ──────────────────────────────── */
+#setup-summary {
+  background: #2c2c2c;
+  border-color: #2c2c2c;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.8rem 1.25rem;
+}
+#setup-summary-text {
+  font-size: 0.85rem;
+  color: #ccc;
+  flex: 1;
+  min-width: 0;
+}
+#setup-summary-text strong {
+  color: #fff;
+}
+#setup-summary #btn-edit-setup {
+  background: #555;
+  color: #fff;
+  white-space: nowrap;
+  width: auto;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+}
+#setup-summary #btn-edit-setup:hover {
+  background: #777;
+}
+
+/* ── Workspace Layout ─────────────────────────────────── */
+#workspace-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+#image-panel {
+  flex: 1 1 500px;
+}
+
+#image-panel h3,
+#measurement-panel h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.75rem;
+}
+
+#canvas-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: auto;
+  display: inline-block;
+  cursor: crosshair;
+  max-width: 100%;
+  touch-action: none;
+}
+
+#image-canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* ── Measurement Panel ────────────────────────────────── */
+#measurement-panel {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#pin-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#pin-label-input {
+  flex: 1;
+  width: auto;
+}
+
+/* ── Pin List ─────────────────────────────────────────── */
+#pin-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#pin-list li {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  position: relative;
+}
+
+#pin-list li .pin-name {
+  font-weight: 600;
+  color: #2c2c2c;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+#pin-list li .pin-remove {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.6rem;
+  background: none;
+  color: #aaa;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+#pin-list li .pin-remove:hover {
+  color: #c00;
+  background: none;
+}
+
+/* ── Canvas Grid Reference ────────────────────────────── */
+#canvas-grid-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: auto;
+  margin-top: 0.75rem;
+}
+
+#canvas-grid-canvas {
+  display: block;
+}
+
+/* ── Utilities ────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Footer ───────────────────────────────────────────── */
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: #aaa;
+  border-top: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+/* ── Responsive: Tablet (≤ 900px) ───────────────────────── */
+@media (max-width: 900px) {
+  #workspace-layout {
+    flex-direction: column;
+  }
+
+  #image-panel {
+    flex: 1 1 auto;
+  }
+
+  #measurement-panel {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  #pin-list {
+    max-height: 260px;
+  }
+}
+
+/* ── Responsive: Phone (≤ 600px) ─────────────────────────── */
+@media (max-width: 600px) {
+  header {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  header h1 {
+    font-size: 1.3rem;
+  }
+
+  main {
+    margin: 1rem auto;
+    padding: 0 0.75rem;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .field-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .field-row label {
+    min-width: unset;
+  }
+
+  input[type="number"],
+  input[type="text"],
+  select {
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.55rem 0.7rem;
+  }
+
+  input[type="file"] {
+    font-size: 0.95rem;
+  }
+
+  .radio-label {
+    font-size: 0.95rem;
+    padding: 0.3rem 0;
+  }
+
+  button {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+  }
+
+  button.link-btn {
+    width: auto;
+  }
+
+  button.secondary {
+    width: 100%;
+  }
+
+  #pin-controls {
+    flex-direction: column;
+  }
+
+  #pin-controls button {
+    width: 100%;
+  }
+
+  #canvas-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #image-canvas {
+    max-width: none;
+  }
+
+  #canvas-grid-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #pin-list {
+    max-height: 220px;
+  }
+
+  #pin-list li {
+    font-size: 0.88rem;
+    padding: 0.7rem 2rem 0.7rem 0.8rem;
+  }
+
+  #pin-list li .pin-remove {
+    top: 0.5rem;
+    right: 0.6rem;
+    font-size: 1rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  #last-point-info {
+    font-size: 0.9rem;
+  }
+}
+
+/* ── Print Styles ─────────────────────────────────────── */
+@media print {
+  header, footer, #section-units, #section-canvas,
+  #section-image, #section-grid, #section-workspace,
+  #btn-print {
+    display: none !important;
+  }
+
+  #section-canvas-grid {
+    display: block !important;
+    border: none;
+    padding: 0;
+  }
+
+  #section-canvas-grid h2,
+  #section-canvas-grid p {
+    display: none !important;
+  }
+
+  #canvas-grid-canvas {
+    width: 100%;
+    height: auto;
+  }
+}
