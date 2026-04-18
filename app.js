@@ -33,8 +33,10 @@ const state = {
   gridRows: 4,
   gridSpacingCol: null,
   gridSpacingRow: null,
+  grayscale: false,
   pins: [],             // { id, label, imgX, imgY } — measurements computed on render
   pendingPoint: null,   // latest click measurement + guide metadata
+  selectedPinId: null,
 };
 
 // ── DOM References ─────────────────────────────────────────────────────────────
@@ -73,6 +75,9 @@ const btnClearPins     = $('btn-clear-pins');
 const canvasGridCanvas = $('canvas-grid-canvas');
 const cgCtx            = canvasGridCanvas.getContext('2d');
 const btnPrint         = $('btn-print');
+const btnOpenSettings  = $('btn-open-settings');
+const btnToggleGrayscale = $('btn-toggle-grayscale');
+const btnToggleGridReference = $('btn-toggle-grid-reference');
 
 // ── Unit conversion helpers ────────────────────────────────────────
 const TO_CM = { cm: 1, in: 2.54, ft: 30.48 };
@@ -99,6 +104,7 @@ function loadPreferences() {
   const savedUnit       = localStorage.getItem('artgrid_unit');
   const savedCanvasUnit = localStorage.getItem('artgrid_canvas_unit');
   const savedPlacement  = localStorage.getItem('artgrid_placement');
+  const savedGrayscale  = localStorage.getItem('artgrid_grayscale');
   if (savedUnit) {
     state.unit = savedUnit;
     unitSelect.value = savedUnit;
@@ -111,14 +117,24 @@ function loadPreferences() {
     state.placement = savedPlacement;
     placementSelect.value = savedPlacement;
   }
+  if (savedGrayscale) {
+    state.grayscale = savedGrayscale === 'true';
+  }
   updateUnitLabels();
   updateCanvasUnitLabels();
+  syncGrayscaleButton();
 }
 
 function savePreferences() {
   localStorage.setItem('artgrid_unit',        state.unit);
   localStorage.setItem('artgrid_canvas_unit', state.canvasUnit);
   localStorage.setItem('artgrid_placement',   state.placement);
+  localStorage.setItem('artgrid_grayscale',   state.grayscale);
+}
+
+function syncGrayscaleButton() {
+  btnToggleGrayscale.textContent = state.grayscale ? 'Color View' : 'Grayscale';
+  btnToggleGrayscale.setAttribute('aria-pressed', String(state.grayscale));
 }
 
 // ── Unit Change ────────────────────────────────────────────────────────────────
@@ -202,11 +218,13 @@ function tryComputeFit() {
   state.marginBottom = Math.max(0, canvasHout - state.imgOffsetY - state.imgOccupiedH);
 
   fitInfoBox.innerHTML =
-    `<strong>Fit:</strong> image fills the full <strong>${state.fitMode}</strong> of the canvas` +
-    ` (${state.imgOccupiedW.toFixed(2)} × ${state.imgOccupiedH.toFixed(2)} ${state.unit})<br>` +
-    `<strong>Placement:</strong> ${state.placement === 'center' ? 'Center' : 'Top-left'}<br>` +
-    `<strong>Margins:</strong> left ${state.marginLeft.toFixed(2)}, right ${state.marginRight.toFixed(2)}, top ${state.marginTop.toFixed(2)}, bottom ${state.marginBottom.toFixed(2)} ${state.unit}<br>` +
-    `<span class="hint">Configure the grid below, then click Draw Grid to see cell sizes and placement.</span>`;
+    `<strong>Image fit ready</strong>` +
+    `<div class="stat-grid">` +
+    `<span class="stat-pill"><span class="stat-label">Fit</span>${state.fitMode}</span>` +
+    `<span class="stat-pill"><span class="stat-label">Area</span>${state.imgOccupiedW.toFixed(2)} × ${state.imgOccupiedH.toFixed(2)} ${state.unit}</span>` +
+    `<span class="stat-pill"><span class="stat-label">Placement</span>${state.placement === 'center' ? 'Center' : 'Top-left'}</span>` +
+    `<span class="stat-pill"><span class="stat-label">Margins</span>L ${state.marginLeft.toFixed(2)} · T ${state.marginTop.toFixed(2)} · R ${state.marginRight.toFixed(2)} · B ${state.marginBottom.toFixed(2)}</span>` +
+    `</div>`;
   fitInfoBox.classList.remove('hidden');
 
   sectionGrid.classList.remove('hidden');
@@ -277,21 +295,12 @@ function drawGrid() {
   updateCellSizeInfo();
 
   sectionWorkspace.classList.remove('hidden');
-  sectionCanvasGrid.classList.remove('hidden');
-  showSetupSummary();
-}
-
-function showSetupSummary() {
-  const gridLabel = state.gridMode === 'division'
-    ? `${state.gridCols}×${state.gridRows} grid`
-    : `${state.gridSpacingCol}×${state.gridSpacingRow} ${state.unit} spacing`;
-  setupSummaryText.innerHTML =
-    `Unit: <strong>${state.unit}</strong> &nbsp;&nbsp; ` +
-    `Canvas: <strong>${state.canvasWidth} × ${state.canvasHeight} ${state.canvasUnit}</strong> &nbsp;&nbsp; ` +
-    `Grid: <strong>${gridLabel}</strong> &nbsp;&nbsp; ` +
-    `Placement: <strong>${state.placement === 'center' ? 'Centered' : 'Top-left'}</strong>`;
-  setupSummary.classList.remove('hidden');
+  sectionCanvasGrid.classList.add('hidden');
+  btnToggleGridReference.textContent = 'Show Grid Reference';
+  document.body.classList.add('workspace-focus');
+  setupSummary.classList.add('hidden');
   ['section-units', 'section-canvas', 'section-image', 'section-grid'].forEach(id => $(id).classList.add('hidden'));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function updateCellSizeInfo() {
@@ -300,15 +309,20 @@ function updateCellSizeInfo() {
   const cellH = (state.imgOccupiedH / state.gridRows).toFixed(2);
 
   cellSizeInfo.innerHTML =
-    `<strong>Each grid cell on your canvas:</strong> ${cellW} ${state.unit} wide × ${cellH} ${state.unit} tall<br>` +
-    `<strong>Image area start point:</strong> ${state.marginLeft.toFixed(2)} ${state.unit} from left edge, ${state.marginTop.toFixed(2)} ${state.unit} from top edge<br>` +
-    `<strong>Remaining margins:</strong> right ${state.marginRight.toFixed(2)} ${state.unit}, bottom ${state.marginBottom.toFixed(2)} ${state.unit}<br>` +
-    `<span class="hint">Draw a ${state.gridCols}×${state.gridRows} grid only inside the image area. Then tap any point to get offsets from the nearest grid lines.</span>`;
+    `<strong>${state.gridCols} × ${state.gridRows} grid</strong>` +
+    `<div class="stat-grid">` +
+    `<span class="stat-pill"><span class="stat-label">Cell</span>${cellW} × ${cellH} ${state.unit}</span>` +
+    `<span class="stat-pill"><span class="stat-label">Start</span>${state.marginLeft.toFixed(2)} left · ${state.marginTop.toFixed(2)} top</span>` +
+    `<span class="stat-pill"><span class="stat-label">Remaining</span>${state.marginRight.toFixed(2)} right · ${state.marginBottom.toFixed(2)} bottom</span>` +
+    `</div>`;
   cellSizeInfo.classList.remove('hidden');
 }
 
 // ── Render Image + Canvas Preview (with dead space) ──────────────────────
 function getMaxDisplayWidth() {
+  if (document.body.classList.contains('workspace-focus')) {
+    return Math.max(320, window.innerWidth - 64);
+  }
   return Math.min(720, window.innerWidth - 48);
 }
 
@@ -357,7 +371,10 @@ function renderImageWithGrid() {
   ctx.restore();
 
   // Image drawn in its placement rectangle
+  ctx.save();
+  ctx.filter = state.grayscale ? 'grayscale(1)' : 'none';
   ctx.drawImage(state.image, dispImgX, dispImgY, dispImgW, dispImgH);
+  ctx.restore();
 
   // Canvas outer border
   ctx.strokeStyle = '#555';
@@ -532,6 +549,26 @@ function buildPointMeasurement(imgX, imgY) {
   };
 }
 
+function updateMeasurementInfo(point) {
+  lastPointInfo.innerHTML =
+    `<strong>Cell ${point.cellName}</strong><br>` +
+    `<div class="measure-row"><span class="legend-swatch swatch-blue"></span><span class="measure-text">From <strong>${point.xRefText}</strong>: <strong>${point.xDist} ${state.unit}</strong></span></div>` +
+    `<div class="measure-row"><span class="legend-swatch swatch-orange"></span><span class="measure-text">From <strong>${point.yRefText}</strong>: <strong>${point.yDist} ${state.unit}</strong></span></div>` +
+    `<div class="stat-grid"><span class="stat-pill"><span class="stat-label">Absolute</span>${point.absX} × ${point.absY} ${state.unit}</span></div>`;
+}
+
+function showPendingPoint(point, options = {}) {
+  const { selectedPinId = null } = options;
+  state.pendingPoint = point;
+  state.selectedPinId = selectedPinId;
+
+  renderImageWithGrid();
+  updateMeasurementInfo(point);
+
+  pinControls.classList.remove('hidden');
+  renderPinList();
+}
+
 // ── Click / Touch to Measure ──────────────────────────────────────────────────
 function measureAtViewportPoint(clientX, clientY) {
   if (!state.scaleFactor || !state.gridCols) return;
@@ -549,7 +586,7 @@ function measureAtViewportPoint(clientX, clientY) {
   // Clip: ignore clicks on dead-space margins
   if (canvasPxX < dix || canvasPxX > dix + diw || canvasPxY < diy || canvasPxY > diy + dih) {
     lastPointInfo.innerHTML =
-      `<span class="hint">Click within the image area (white zone) to measure a point.</span>`;
+      `<span class="hint">Select a point inside the image area.</span>`;
     return;
   }
 
@@ -557,18 +594,7 @@ function measureAtViewportPoint(clientX, clientY) {
   const imgX = (canvasPxX - dix) / imgToDisp;
   const imgY = (canvasPxY - diy) / imgToDisp;
 
-  state.pendingPoint = buildPointMeasurement(imgX, imgY);
-
-  renderImageWithGrid();
-
-  lastPointInfo.innerHTML =
-    `<strong>Cell ${state.pendingPoint.cellName}</strong><br>` +
-    `<div class="measure-row"><span class="legend-swatch swatch-blue"></span><span class="measure-text">From <strong>${state.pendingPoint.xRefText}</strong>: <strong>${state.pendingPoint.xDist} ${state.unit}</strong></span></div>` +
-    `<div class="measure-row"><span class="legend-swatch swatch-orange"></span><span class="measure-text">From <strong>${state.pendingPoint.yRefText}</strong>: <strong>${state.pendingPoint.yDist} ${state.unit}</strong></span></div>` +
-    `<span class="hint">Absolute from canvas corner: ${state.pendingPoint.absX} × ${state.pendingPoint.absY} ${state.unit}</span>`;
-
-  pinControls.classList.remove('hidden');
-  pinLabelInput.focus();
+  showPendingPoint(buildPointMeasurement(imgX, imgY));
 }
 
 imageCanvas.addEventListener('click', e => {
@@ -595,6 +621,7 @@ function addPin() {
   state.pins.push(pin);
   pinLabelInput.value = '';
   state.pendingPoint  = null;
+  state.selectedPinId = null;
   pinControls.classList.add('hidden');
 
   renderPinList();
@@ -636,19 +663,42 @@ function renderPinList() {
   state.pins.forEach(pin => {
     const m  = computePinMeasurements(pin);
     const li = document.createElement('li');
+    li.classList.toggle('active', pin.id === state.selectedPinId);
+    li.tabIndex = 0;
     li.innerHTML =
       `<span class="pin-name">${escapeHtml(pin.label)}</span>` +
       `Cell <strong>${m.cellName}</strong><br>` +
       `From ${m.xRefText}: <strong>${m.xDist} ${state.unit}</strong><br>` +
       `From ${m.yRefText}: <strong>${m.yDist} ${state.unit}</strong><br>` +
-      `<span class="hint">Absolute: ${m.absX} × ${m.absY} ${state.unit}</span>` +
+      `<span class="hint">${m.absX} × ${m.absY} ${state.unit}</span>` +
       `<button class="pin-remove" data-id="${pin.id}" title="Remove">✕</button>`;
+
+    const selectPin = () => {
+      showPendingPoint(m, { selectedPinId: pin.id });
+    };
+
+    li.addEventListener('click', selectPin);
+    li.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectPin();
+      }
+    });
+
     pinList.appendChild(li);
   });
 
   pinList.querySelectorAll('.pin-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const pinId = parseInt(btn.dataset.id, 10);
       state.pins = state.pins.filter(p => p.id !== parseInt(btn.dataset.id));
+      if (state.selectedPinId === pinId) {
+        state.selectedPinId = null;
+        state.pendingPoint = null;
+        pinControls.classList.add('hidden');
+        lastPointInfo.innerHTML = 'Select a point on the image.';
+      }
       renderPinList();
       renderImageWithGrid();
       if (state.pins.length === 0) btnClearPins.classList.add('hidden');
@@ -659,16 +709,48 @@ function renderPinList() {
 // ── Clear All Pins ─────────────────────────────────────────────────────────────
 btnClearPins.addEventListener('click', () => {
   state.pins = [];
+  state.pendingPoint = null;
+  state.selectedPinId = null;
+  pinControls.classList.add('hidden');
+  lastPointInfo.innerHTML = 'Select a point on the image.';
   renderPinList();
   renderImageWithGrid();
   btnClearPins.classList.add('hidden');
 });
 // ── Edit Setup ─────────────────────────────────────────────────────
-btnEditSetup.addEventListener('click', () => {
+function openSettingsView() {
+  document.body.classList.remove('workspace-focus');
+  sectionCanvasGrid.classList.add('hidden');
+  btnToggleGridReference.textContent = 'Show Grid Reference';
   ['section-units', 'section-canvas', 'section-image', 'section-grid'].forEach(id => $(id).classList.remove('hidden'));
   if (state.image) imgPlacementRow.classList.remove('hidden'); // image already loaded
   setupSummary.classList.add('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnEditSetup.addEventListener('click', openSettingsView);
+btnOpenSettings.addEventListener('click', openSettingsView);
+
+btnToggleGrayscale.addEventListener('click', () => {
+  state.grayscale = !state.grayscale;
+  syncGrayscaleButton();
+  savePreferences();
+  if (state.image) {
+    renderImageWithGrid();
+  }
+});
+
+btnToggleGridReference.addEventListener('click', () => {
+  const willShow = sectionCanvasGrid.classList.contains('hidden');
+  sectionCanvasGrid.classList.toggle('hidden', !willShow);
+  btnToggleGridReference.textContent = willShow ? 'Hide Grid Reference' : 'Show Grid Reference';
+
+  if (willShow) {
+    renderCanvasGrid();
+    requestAnimationFrame(() => {
+      sectionCanvasGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 });
 // ── Render Canvas Grid (Companion View) ───────────────────────────────────────
 const MAX_CANVAS_GRID_W = 700;
