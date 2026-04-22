@@ -119,8 +119,9 @@
       <div id="workspace-topbar">
         <div>
           <h2>Workspace</h2>
-          <p class="hint">Tap to inspect. Save only the points you want to keep.</p>
+          <p class="hint">Tap the image to inspect a point. Zoom is available when you need finer control.</p>
         </div>
+        <button id="btn-workspace-menu-toggle" class="secondary" type="button" aria-expanded="false" aria-controls="workspace-actions">Tools</button>
         <div id="workspace-actions">
           <button id="btn-open-settings" class="secondary">Settings</button>
           <button id="btn-toggle-grayscale" class="secondary" aria-pressed="false">Grayscale</button>
@@ -134,22 +135,38 @@
 
         <div id="image-panel">
           <h3>Reference View</h3>
-          <div id="canvas-wrapper">
-            <canvas id="image-canvas"></canvas>
+          <div id="image-stage">
+            <div id="canvas-wrapper">
+              <div id="canvas-zoom-stage">
+                <canvas id="image-canvas"></canvas>
+              </div>
+            </div>
+            <button id="btn-zoom-toggle" class="secondary hidden" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="zoom-controls">Zoom</button>
+            <div id="zoom-controls" class="hidden" aria-label="Reference zoom controls">
+              <div id="zoom-controls-header">
+                <div id="zoom-level" aria-live="polite">Zoom 100%</div>
+                <button id="btn-zoom-reset" class="secondary" type="button">Reset</button>
+              </div>
+              <div id="zoom-controls-row">
+                <button id="btn-zoom-out" class="secondary" type="button" aria-label="Zoom out">-</button>
+                <input type="range" id="zoom-range" min="100" max="400" step="25" value="100" aria-label="Zoom level" />
+                <button id="btn-zoom-in" class="secondary" type="button" aria-label="Zoom in">+</button>
+              </div>
+            </div>
+            <button id="current-point-summary" class="is-empty" type="button" aria-expanded="false" disabled>Select a point on the image</button>
           </div>
         </div>
 
         <div id="measurement-panel">
+          <div id="detail-panel-resizer" aria-hidden="true"></div>
           <h3>Point Details</h3>
-          <div id="last-point-info" class="info-box">
-            Select a point on the image.
-          </div>
+          <div id="last-point-info" class="info-box hidden"></div>
 
           <div id="pin-controls" class="hidden">
-            <input type="text" id="pin-label-input" placeholder="Point name" />
-            <button id="btn-add-pin">Save Point</button>
+            <button id="btn-add-pin" type="button">Save Point</button>
           </div>
 
+          <p id="saved-points-meta" class="hint">Saved points: 0</p>
           <ul id="pin-list"></ul>
            <button id="btn-clear-pins" class="secondary hidden">Clear Saved Points</button>
         </div>
