@@ -45,6 +45,17 @@ const state = {
 const UI_ZOOM_MIN = 1;
 const UI_ZOOM_MAX = 4;
 const UI_ZOOM_STEP = 0.25;
+const TAP_MOVE_TOLERANCE = 8;
+
+const pointerSession = {
+  active: false,
+  pointerId: null,
+  pointerType: '',
+  startClientX: 0,
+  startClientY: 0,
+  startScrollLeft: 0,
+  startScrollTop: 0,
+};
 
 // ── DOM References ─────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -268,6 +279,7 @@ function applyUiZoom(options = {}) {
   canvasZoomStage.style.width = `${scaledW}px`;
   canvasZoomStage.style.height = `${scaledH}px`;
   const zoomedIn = state.uiZoom > 1;
+  canvasWrapper.classList.toggle('is-zoomed', zoomedIn);
   canvasWrapper.style.overflowX = zoomedIn ? 'auto' : 'hidden';
   canvasWrapper.style.overflowY = zoomedIn ? 'auto' : 'hidden';
   imageCanvas._uiZoom = state.uiZoom;
@@ -554,7 +566,7 @@ function renderImageWithGrid() {
   const canvasHout = fromCm(state.canvasHeightCm, state.unit);
 
   const maxDispW   = getMaxDisplayWidth();
-  const fallbackMaxDispH = Math.round(window.innerHeight * (isCompactViewport() ? 0.68 : 0.78));
+  const fallbackMaxDispH = Math.round(window.innerHeight * (isCompactViewport() ? 0.8 : 0.78));
   const wrapperHeightLimit = getWrapperHeightLimit();
   const maxDispH   = wrapperHeightLimit ? Math.min(fallbackMaxDispH, wrapperHeightLimit) : fallbackMaxDispH;
   const dispScale  = Math.min(maxDispW / canvasWout, maxDispH / canvasHout);
@@ -570,6 +582,19 @@ function renderImageWithGrid() {
 
   imageCanvas.width  = dispCanvasW;
   imageCanvas.height = dispCanvasH;
+
+  // Lock wrapper to the base (100%) canvas viewport so zoomed content scrolls inside it.
+  const wrapperStyle = window.getComputedStyle(canvasWrapper);
+  const padTop = parseFloat(wrapperStyle.paddingTop) || 0;
+  const padBottom = parseFloat(wrapperStyle.paddingBottom) || 0;
+  const padLeft = parseFloat(wrapperStyle.paddingLeft) || 0;
+  const padRight = parseFloat(wrapperStyle.paddingRight) || 0;
+  const wrapperOuterW = Math.round(dispCanvasW + padLeft + padRight);
+  const wrapperOuterH = Math.round(dispCanvasH + padTop + padBottom);
+
+  imageStage.style.setProperty('--stage-width', `${wrapperOuterW}px`);
+  canvasWrapper.style.height = `${wrapperOuterH}px`;
+  canvasWrapper.style.maxWidth = `${wrapperOuterW}px`;
 
   // Store for click/touch and pin mapping
   imageCanvas._dispImgX  = dispImgX;
@@ -840,15 +865,45 @@ function measureAtViewportPoint(clientX, clientY) {
   showPendingPoint(buildPointMeasurement(imgX, imgY));
 }
 
-imageCanvas.addEventListener('click', e => {
-  measureAtViewportPoint(e.clientX, e.clientY);
-});
+function handleCanvasPointerDown(e) {
+  pointerSession.active = true;
+  pointerSession.pointerId = e.pointerId;
+  pointerSession.pointerType = e.pointerType || 'mouse';
+  pointerSession.startClientX = e.clientX;
+  pointerSession.startClientY = e.clientY;
+  pointerSession.startScrollLeft = canvasWrapper.scrollLeft;
+  pointerSession.startScrollTop = canvasWrapper.scrollTop;
+  if (state.uiZoom > 1) {
+    canvasWrapper.classList.add('is-panning');
+  }
+}
 
-imageCanvas.addEventListener('touchend', e => {
-  e.preventDefault(); // prevent the ghost click that follows touch
-  const touch = e.changedTouches[0];
-  measureAtViewportPoint(touch.clientX, touch.clientY);
-});
+function handleCanvasPointerCancel() {
+  pointerSession.active = false;
+  pointerSession.pointerId = null;
+  pointerSession.pointerType = '';
+  canvasWrapper.classList.remove('is-panning');
+}
+
+function handleCanvasPointerUp(e) {
+  if (!pointerSession.active || pointerSession.pointerId !== e.pointerId) return;
+
+  const movedX = Math.abs(e.clientX - pointerSession.startClientX);
+  const movedY = Math.abs(e.clientY - pointerSession.startClientY);
+  const scrollMovedX = Math.abs(canvasWrapper.scrollLeft - pointerSession.startScrollLeft);
+  const scrollMovedY = Math.abs(canvasWrapper.scrollTop - pointerSession.startScrollTop);
+  const gestureMoved = movedX > TAP_MOVE_TOLERANCE || movedY > TAP_MOVE_TOLERANCE || scrollMovedX > 2 || scrollMovedY > 2;
+
+  handleCanvasPointerCancel();
+
+  // During zoom/pan on touch devices, ignore drag-end taps so panning stays fluid.
+  if (gestureMoved) return;
+  measureAtViewportPoint(e.clientX, e.clientY);
+}
+
+imageCanvas.addEventListener('pointerdown', handleCanvasPointerDown);
+imageCanvas.addEventListener('pointerup', handleCanvasPointerUp);
+imageCanvas.addEventListener('pointercancel', handleCanvasPointerCancel);
 
 // ── Add Pin ───────────────────────────────────────────────────────────────────
 btnAddPin.addEventListener('click', addPin);
