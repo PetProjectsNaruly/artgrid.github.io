@@ -27,7 +27,7 @@ const state = {
   marginRight: 0,
   marginTop: 0,
   marginBottom: 0,
-  placement: 'center',  // 'center' | 'top-left'
+  placement: 'center',  // fit-height: 'left'|'center'|'right' ; fit-width: 'top'|'center'|'bottom'
   gridMode: 'division',
   gridCols: 4,
   gridRows: 4,
@@ -394,6 +394,47 @@ placementSelect.addEventListener('change', () => {
   }
 });
 
+function getPlacementOptions(fitMode) {
+  if (fitMode === 'height') {
+    return [
+      { value: 'left', label: 'Left' },
+      { value: 'center', label: 'Center (recommended)' },
+      { value: 'right', label: 'Right' }
+    ];
+  }
+
+  return [
+    { value: 'top', label: 'Top' },
+    { value: 'center', label: 'Center (recommended)' },
+    { value: 'bottom', label: 'Bottom' }
+  ];
+}
+
+function normalizePlacementForFitMode(value, fitMode) {
+  // Backward compatibility: map legacy placement to the new mode-specific values.
+  if (value === 'top-left') {
+    return fitMode === 'height' ? 'left' : 'top';
+  }
+
+  if (fitMode === 'height') {
+    return ['left', 'center', 'right'].includes(value) ? value : 'center';
+  }
+
+  return ['top', 'center', 'bottom'].includes(value) ? value : 'center';
+}
+
+function applyPlacementOptionsForFitMode(fitMode) {
+  const normalized = normalizePlacementForFitMode(state.placement, fitMode);
+  const options = getPlacementOptions(fitMode);
+
+  placementSelect.innerHTML = options
+    .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
+    .join('');
+
+  state.placement = normalized;
+  placementSelect.value = normalized;
+}
+
 // ── Canvas + Image: trigger fit recalculation when all three are set ───────────
 function tryComputeFit() {
   const w = parseFloat(canvasWidthInput.value);
@@ -420,16 +461,32 @@ function tryComputeFit() {
     state.scaleFactor = canvasHout / state.imgNaturalH;
   }
 
+  applyPlacementOptionsForFitMode(state.fitMode);
+
   // Store occupied area and placement in output units
   state.imgOccupiedW = state.imgNaturalW * state.scaleFactor;
   state.imgOccupiedH = state.imgNaturalH * state.scaleFactor;
 
-  if (state.placement === 'top-left') {
-    state.imgOffsetX = 0;
+  if (state.fitMode === 'height') {
     state.imgOffsetY = 0;
+
+    if (state.placement === 'left') {
+      state.imgOffsetX = 0;
+    } else if (state.placement === 'right') {
+      state.imgOffsetX = canvasWout - state.imgOccupiedW;
+    } else {
+      state.imgOffsetX = (canvasWout - state.imgOccupiedW) / 2;
+    }
   } else {
-    state.imgOffsetX = (canvasWout - state.imgOccupiedW) / 2;
-    state.imgOffsetY = (canvasHout - state.imgOccupiedH) / 2;
+    state.imgOffsetX = 0;
+
+    if (state.placement === 'top') {
+      state.imgOffsetY = 0;
+    } else if (state.placement === 'bottom') {
+      state.imgOffsetY = canvasHout - state.imgOccupiedH;
+    } else {
+      state.imgOffsetY = (canvasHout - state.imgOccupiedH) / 2;
+    }
   }
 
   state.marginLeft = Math.max(0, state.imgOffsetX);
@@ -442,7 +499,7 @@ function tryComputeFit() {
     `<div class="stat-grid">` +
     `<span class="stat-pill"><span class="stat-label">Fit</span>${state.fitMode}</span>` +
     `<span class="stat-pill"><span class="stat-label">Area</span>${state.imgOccupiedW.toFixed(2)} × ${state.imgOccupiedH.toFixed(2)} ${state.unit}</span>` +
-    `<span class="stat-pill"><span class="stat-label">Placement</span>${state.placement === 'center' ? 'Center' : 'Top-left'}</span>` +
+    `<span class="stat-pill"><span class="stat-label">Placement</span>${state.placement.charAt(0).toUpperCase() + state.placement.slice(1)}</span>` +
     `<span class="stat-pill"><span class="stat-label">Margins</span>L ${state.marginLeft.toFixed(2)} · T ${state.marginTop.toFixed(2)} · R ${state.marginRight.toFixed(2)} · B ${state.marginBottom.toFixed(2)}</span>` +
     `</div>`;
   fitInfoBox.classList.remove('hidden');
